@@ -1,0 +1,74 @@
+.chatListPage {
+  height: 100vh;
+  background: #0b0e14;
+  color: #e8eaf0;
+  padding: 24px;
+}
+
+.chatListTitle {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+/* List */
+.chatList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Item */
+.chatItem {
+  display: flex;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 10px;
+  background: #121720;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.chatItem:hover {
+  background: #161d2b;
+}
+
+/* Avatar */
+.chatAvatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #d4af6a;
+  color: #0b0e14;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+/* Info */
+.chatInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.chatTop {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.chatName {
+  font-weight: 600;
+}
+
+.chatTime {
+  color: #7a8499;
+  font-size: 12px;
+}
+
+.chatLast {
+  font-size: 13px;
+  color: #7a8499;
+  margin-top: 4px;
+}

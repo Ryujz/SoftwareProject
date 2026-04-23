@@ -1,0 +1,51 @@
+/* ─── Fonts ───────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap');
+
+/* ─── Reset ───────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ─── Base ───────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #0b0e14;
+  font-family: 'Sora', sans-serif;
+  color: #e8eaf0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Default Elements ───────────── */
+a {
+  text-decoration: none;
+  color: inherit;
+  transition: opacity 0.2s ease;
+}
+
+a:hover {
+  opacity: 0.8;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+/* ─── Utility Classes ───────────── */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Optional: smooth card hover */
+.feat-card:hover {
+  background: #161d2b !important;
+}

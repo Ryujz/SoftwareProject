@@ -1,0 +1,22 @@
+.createProjectBtn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 12px 20px;
+  border-radius: 10px;
+
+  background: linear-gradient(135deg, #d4af6a, #a07c3a);
+  color: #0b0e14;
+
+  font-weight: 600;
+  font-size: 14px;
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+}

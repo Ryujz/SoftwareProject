@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Socket JWT Test</title>
+</head>
+<body>
+  <h2>Socket.IO + JWT Test</h2>
+
+  <p>Token:</p>
+  <textarea id="token" rows="4" cols="80"></textarea><br><br>
+  <button onclick="connectSocket()">Connect Socket</button>
+
+  <hr>
+
+  <p>Private Chat ID:</p>
+  <input id="privateChatId" type="number" value="1" />
+  <button onclick="joinPrivate()">Join Private Chat</button>
+  <button onclick="sendPrivate()">Send Private Message</button>
+
+  <p>Group Chat ID:</p>
+  <input id="groupChatId" type="number" value="1" />
+  <button onclick="joinGroup()">Join Group Chat</button>
+  <button onclick="sendGroup()">Send Group Message</button>
+
+  <ul id="messages"></ul>
+
+  <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+  <script>
+    let socket;
+
+    function addMessage(text) {
+      const li = document.createElement("li");
+      li.textContent = text;
+      document.getElementById("messages").appendChild(li);
+    }
+
+    function connectSocket() {
+      const token = document.getElementById("token").value.trim();
+
+      socket = io("http://localhost:5000", {
+        auth: {
+          token: token
+        }
+      });
+
+      socket.on("connect", () => {
+        addMessage("Connected: " + socket.id);
+      });
+
+      socket.on("connect_error", (err) => {
+        addMessage("CONNECT ERROR: " + err.message);
+      });
+
+      socket.on("joined_private_chat", (data) => {
+        addMessage("[JOINED PRIVATE] " + JSON.stringify(data));
+      });
+
+      socket.on("joined_group_chat", (data) => {
+        addMessage("[JOINED GROUP] " + JSON.stringify(data));
+      });
+
+      socket.on("receive_private_message", (data) => {
+        addMessage("[PRIVATE] " + JSON.stringify(data));
+      });
+
+      socket.on("receive_group_message", (data) => {
+        addMessage("[GROUP] " + JSON.stringify(data));
+      });
+
+      socket.on("socket_error", (data) => {
+        addMessage("[ERROR] " + JSON.stringify(data));
+      });
+
+      socket.on("receive_notification", (data) => {
+        addMessage("[NOTIFICATION] " + JSON.stringify(data));
+      });
+    }
+
+    function joinPrivate() {
+      const chatId = Number(document.getElementById("privateChatId").value);
+      socket.emit("join_private_chat", { chatId });
+    }
+
+    function sendPrivate() {
+      const chatId = Number(document.getElementById("privateChatId").value);
+      socket.emit("send_private_message", {
+        chatId,
+        message: "Hello from secure private socket"
+      });
+    }
+
+    function joinGroup() {
+      const groupChatId = Number(document.getElementById("groupChatId").value);
+      socket.emit("join_group_chat", { groupChatId });
+    }
+
+    function sendGroup() {
+      const groupChatId = Number(document.getElementById("groupChatId").value);
+      socket.emit("send_group_message", {
+        groupChatId,
+        message: "Hello from secure group socket"
+      });
+    }
+  </script>
+</body>
+</html>
