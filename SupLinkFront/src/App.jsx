@@ -14,6 +14,9 @@ import SupplierProfilePage from "./pages/ProfileSupplier";
 import VendorProfilePage from "./pages/Profile";
 import ProjectList from "./pages/ProjectList";
 import PostedPortfolio from "./pages/PostedPortfolio";
+import SupplyChainManagement from "./pages/SupplyChainManagement";
+import MyTasks from "./pages/MyTasks";
+import GroupChat from "./pages/GroupChat";
 import { SocketProvider } from "./context/socketContext";
 export default function App() {
   return (
@@ -25,15 +28,19 @@ export default function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
               <Route path="/marketplace" element={<Marketplace />} />
-              <Route path="/Chat" element={<ChatList />} />
-              <Route path="/chat/:id" element={<Chat />} />
               <Route path="/browse-projects" element={<ProjectList />} />
               <Route element={<ProtectedRoute />}>
+                <Route path="/group-chat/:id" element={<GroupChat />} />
+                <Route path="/Chat" element={<ChatList />} />
+                <Route path="/chat/:id" element={<Chat />} />
                 <Route path="/posted-projects" element={<PostedProject />} />
                 <Route path="/posted-portfolio" element={<PostedPortfolio />} />
-                <Route path="/SupplierProfile" element={<SupplierProfilePage />} /> 
+                <Route path="/SupplierProfile" element={<SupplierProfilePage />} />
                 <Route path="/VendorProfile" element={<VendorProfilePage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
+                {/* Supply Chain Routes */}
+                <Route path="/supply-chain/:projectId" element={<SupplyChainManagement />} />
+                <Route path="/my-tasks" element={<MyTasks />} />
               </Route>
               <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>

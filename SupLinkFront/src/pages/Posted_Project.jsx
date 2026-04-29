@@ -154,6 +154,9 @@ export default function PostedProject() {
                   project={project}
                   canDelete
                   onDelete={(deletedID) => setProjects((prev) => prev.filter((p) => p.id !== deletedID))}
+                  canEdit
+                  onUpdate = {(updated) => setProjects((ps) => ps.map((p) => p.id === updated.id ? updated : p))}
+                  canManageSupplyChain
                 />
               </div>
             ))

@@ -72,3 +72,23 @@
   color: #7a8499;
   margin-top: 4px;
 }
+
+.chatAvatar {
+  position: relative;
+}
+
+.groupBadge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #4f8ef7;
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

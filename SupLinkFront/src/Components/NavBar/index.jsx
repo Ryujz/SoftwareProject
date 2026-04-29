@@ -9,7 +9,8 @@ const NAV_LINKS = (role) => {
   ];
   const supplier = [
     {name: "My Portfolio", path: "/posted-portfolio"},
-  ] 
+    {name: "My Tasks", path: "/my-tasks"},
+  ]
   const vendor = [
     {name: "Posted Projects", path: "/posted-projects"},
   ]
