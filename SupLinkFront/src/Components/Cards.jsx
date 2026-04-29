@@ -1,74 +1,77 @@
-/**
- * POCard — Floating purchase order preview card.
- *
- * Props:
- *   order?: {
- *     id?:        string   — PO number, e.g. "PO-00812"
- *     supplier?:  string
- *     category?:  string
- *     amount?:    string   — formatted string, e.g. "$284,500.00"
- *     savings?:   string   — e.g. "↓ 12.4% vs budget"
- *     delivery?:  number   — 0–100 percent complete
- *     status?:    "Approved" | "Pending" | "Rejected"
- *   }
- *   style?: React.CSSProperties  — override wrapper styles (position, etc.)
- *   visible?: boolean            — fade/slide in when true (default true)
- */
-export default function POCard({ order = {}, style = {}, visible = true }) {
-  const {
-    id = "PO-00812",
-    supplier = "Apex Industrial Co.",
-    category = "MRO Supplies",
-    amount = "$284,500.00",
-    savings = "↓ 12.4% vs budget",
-    delivery = 72,
-    status = "Approved",
-  } = order;
+import { useState } from "react";
+import { deletePortfolio } from "../api/supplier";
 
-  const statusStyle = STATUS_STYLES[status] ?? STATUS_STYLES["Approved"];
+// Added "onDelete" prop to handle the logic in the parent component
+export default function POCard({ portfolio = {}, onDelete , canDelete = false}) {
+  const [isConfirming, setIsConfirming] = useState(false);
+
+  const {
+    id: portfolio_id,
+    title = "Untitled",
+    description = "No description provided.",
+    company_name = "Unknown Supplier",
+    image_url,
+    created_at,
+  } = portfolio;
+
+  const handleDelete = async () => {
+  try {
+    await deletePortfolio(portfolio_id);
+    onDelete?.(portfolio_id);
+  } catch (err) {
+    console.error("Delete failed:", err.message);
+    // optionally show an error toast/message
+  }
+};
 
   return (
-    <div
-      style={{
-        ...s.card,
-        opacity: visible ? 1 : 0,
-        transform: visible ? "none" : "translateY(40px) rotate(2deg)",
-        transition: "opacity 1s .3s ease, transform 1s .3s ease",
-        ...style,
-      }}
-    >
-      {/* Window chrome dots */}
-      <div style={s.cardHeader}>
-        <div style={s.dotRed} />
-        <div style={s.dotYellow} />
-        <div style={s.dotGreen} />
-        <span style={s.cardTitle}>Purchase Order #{id}</span>
-      </div>
+    <div style={s.card}>
+      {/* Image */}
+      {image_url ? (
+        <img src={image_url} alt={title} style={s.image} />
+      ) : (
+        <div style={s.imagePlaceholder}>No Image</div>
+      )}
 
-      <Row label="Supplier"  value={supplier} />
-      <Row label="Category"  value={category} />
-      <Row label="Amount"    value={<span style={s.amountVal}>{amount}</span>} />
-
-      {/* Status pill */}
-      <div style={s.row}>
-        <span style={s.label}>Approval</span>
-        <span style={{ ...s.pill, ...statusStyle }}>● {status}</span>
-      </div>
-
-      <Row label="Savings" value={<span style={s.savingsVal}>{savings}</span>} />
-
-      {/* Delivery progress */}
-      <div style={s.progressWrap}>
-        <div style={s.progressTrack}>
-          <div style={{ ...s.progressFill, width: `${Math.min(100, Math.max(0, delivery))}%` }} />
+      {/* Content */}
+      <div style={s.content}>
+        <div style={s.cardHeader}>
+          <div style={s.dotRed} />
+          <div style={s.dotYellow} />
+          <div style={s.dotGreen} />
+          <span style={s.cardId}>Portfolio #{portfolio_id}</span>
         </div>
-        <span style={s.progressLabel}>Delivery: {delivery}% complete</span>
+
+        <Row label="Title"       value={title} />
+        <Row label="Description" value={<span style={s.desc}>{description}</span>} />
+        <Row label="Supplier"    value={company_name} />
+        <Row label="Posted"      value={created_at ? new Date(created_at).toLocaleDateString() : "—"} />
+
+          {/* Delete Section */}
+          {canDelete && (
+            <div style={s.footer}>
+          {!isConfirming ? (
+            <button 
+              onClick={() => setIsConfirming(true)} 
+              style={s.deleteBtn}
+            >
+              Delete Portfolio
+            </button>
+          ) : (
+            <div style={s.confirmGroup}>
+              <span style={s.confirmText}>Are you sure?</span>
+              <button onClick={handleDelete} style={s.confirmBtn}>Yes</button>
+              <button onClick={() => setIsConfirming(false)} style={s.cancelBtn}>No</button>
+            </div>
+          )}
+        </div>
+
+        )}
       </div>
     </div>
   );
 }
 
-/* ─── Sub-component ───────────────────────────────────────────── */
 function Row({ label, value }) {
   return (
     <div style={s.row}>
@@ -78,64 +81,101 @@ function Row({ label, value }) {
   );
 }
 
-/* ─── Constants ───────────────────────────────────────────────── */
-const STATUS_STYLES = {
-  Approved: { color: "#7ed321", background: "rgba(126,211,33,.1)" },
-  Pending:  { color: "#f5a623", background: "rgba(245,166,35,.1)" },
-  Rejected: { color: "#e05353", background: "rgba(224,83,83,.1)"  },
-};
-
-/* ─── Styles ──────────────────────────────────────────────────── */
 const C = {
   surface: "#121720",
-  border: "#1e2736",
-  text: "#e8eaf0",
-  muted: "#7a8499",
-  accent: "#d4af6a",
-  accentDark: "#a07c3a",
+  border:  "#1e2736",
+  text:    "#e8eaf0",
+  muted:   "#7a8499",
+  accent:  "#d4af6a",
 };
 
 const s = {
   card: {
-    flex: "0 0 340px",
     background: C.surface,
     border: `1px solid ${C.border}`,
     borderRadius: 16,
-    padding: 24,
-    boxShadow: "0 24px 60px rgba(0,0,0,.5)",
-    position: "relative",
+    overflow: "hidden",
   },
-
-  // Header chrome
-  cardHeader: { display: "flex", alignItems: "center", gap: 6, marginBottom: 20 },
+  image: {
+    width: "100%",
+    height: 200,
+    objectFit: "cover",
+    display: "block",
+  },
+  imagePlaceholder: {
+    width: "100%",
+    height: 200,
+    background: "#1e2736",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: C.muted,
+    fontSize: 14,
+  },
+  content: { padding: 24 },
+  cardHeader: {
+    display: "flex", alignItems: "center", gap: 6, marginBottom: 16,
+  },
   dotRed:    { width: 10, height: 10, borderRadius: "50%", background: "#e05353" },
   dotYellow: { width: 10, height: 10, borderRadius: "50%", background: "#f5a623" },
   dotGreen:  { width: 10, height: 10, borderRadius: "50%", background: "#7ed321" },
-  cardTitle: { fontSize: 12, color: C.muted, marginLeft: 8, fontFamily: "monospace" },
-
-  // Rows
+  cardId:    { fontSize: 12, color: C.muted, marginLeft: 8, fontFamily: "monospace" },
   row: {
-    display: "flex", justifyContent: "space-between", alignItems: "center",
+    display: "flex", justifyContent: "space-between", alignItems: "flex-start",
     padding: "10px 0", borderBottom: `1px solid ${C.border}`,
   },
-  label: { fontSize: 12, color: C.muted, textTransform: "uppercase", letterSpacing: ".06em" },
-  value: { fontSize: 14, fontWeight: 600, color: C.text },
-
-  // Special value styles
-  amountVal:  { fontSize: 14, fontWeight: 700, color: C.accent },
-  savingsVal: { fontSize: 14, fontWeight: 600, color: "#7ed321" },
-
-  // Status pill
-  pill: { fontSize: 12, padding: "3px 10px", borderRadius: 100 },
-
-  // Progress bar
-  progressWrap:  { marginTop: 16 },
-  progressTrack: { height: 4, background: C.border, borderRadius: 4, overflow: "hidden", marginBottom: 8 },
-  progressFill:  {
-    height: "100%",
-    background: `linear-gradient(90deg, ${C.accentDark}, ${C.accent})`,
-    borderRadius: 4,
-    transition: "width .6s ease",
+  label: {
+    fontSize: 12, color: C.muted,
+    textTransform: "uppercase", letterSpacing: ".06em",
+    flexShrink: 0,
   },
-  progressLabel: { fontSize: 12, color: C.muted },
+  value: {
+    fontSize: 14, fontWeight: 600, color: C.text,
+    textAlign: "right", maxWidth: "65%",
+  },
+  desc: {
+    fontSize: 13, fontWeight: 400, color: "#a0a8b8",
+    whiteSpace: "pre-wrap",
+  },
+  footer: {
+    marginTop: 20,
+    display: "flex",
+    justifyContent: "flex-end",
+  },
+  deleteBtn: {
+    background: "transparent",
+    border: `1px solid #e05353`,
+    color: "#e05353",
+    padding: "6px 12px",
+    borderRadius: 6,
+    cursor: "pointer",
+    fontSize: 12,
+    transition: "all 0.2s",
+  },
+  confirmGroup: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+  },
+  confirmText: {
+    fontSize: 12,
+    color: "#e05353",
+    fontWeight: "bold",
+  },
+  confirmBtn: {
+    background: "#e05353",
+    border: "none",
+    color: "white",
+    padding: "4px 10px",
+    borderRadius: 4,
+    cursor: "pointer",
+  },
+  cancelBtn: {
+    background: C.border,
+    border: "none",
+    color: C.text,
+    padding: "4px 10px",
+    borderRadius: 4,
+    cursor: "pointer",
+  }
 };

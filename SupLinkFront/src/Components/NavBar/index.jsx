@@ -2,21 +2,51 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
-const NAV_LINKS = [
-  {name: "Marketplace", path: "/marketplace"},
-  {name: "Posted Project", path: "/posted-projects"}
-];
+const NAV_LINKS = (role) => {
+  const common = [
+    {name: "Browse Supplies", path: "/marketplace"},
+    {name: "Browse Projects", path: "/browse-projects"}
+  ];
+  const supplier = [
+    {name: "My Portfolio", path: "/posted-portfolio"},
+  ] 
+  const vendor = [
+    {name: "Posted Projects", path: "/posted-projects"},
+  ]
 
+  if (role === "supplier") {
+    return [
+      ...common,
+      ...supplier
+    ];
+  }
+  if (role === "vendor") {
+    return [
+      ...common,
+      ...vendor
+    ];
+  }
+
+  return common;
+};
 /**
  * Navbar
  * Props:
  *   links?: string[]   — override default nav links
  */
-export default function Navbar({ links = NAV_LINKS }) {
+export default function Navbar({ links }) {
   const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  
+  const navLinks = links || NAV_LINKS(user?.role);
 
+  const getProfilePath = () => {
+    if (!user) return "/login";
+    if (user.role === "supplier") return "/SupplierProfile";
+    if (user.role === "vendor") return "/VendorProfile";
+    return "/profile";
+  }
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", fn);
@@ -34,7 +64,7 @@ export default function Navbar({ links = NAV_LINKS }) {
 
         {/* Desktop links */}
         <div style={s.navLinks}>
-          {links.map((l) => (
+          {navLinks.map((l) => (
             <Link key={l.name} to={l.path} style={s.navLink}>
               {l.name}
             </Link>
@@ -46,8 +76,8 @@ export default function Navbar({ links = NAV_LINKS }) {
           <Link to="/Chat" style={s.btnGhost}>
             Chat
           </Link>
-          <Link to={user? "/profile" : "/login"} style={s.btnSolid}>
-            Profile
+          <Link to={getProfilePath(user)} style={s.btnSolid}>
+            {user ? "My Profile" : "Login / Signup"}
           </Link>
         </div>
 
@@ -60,9 +90,9 @@ export default function Navbar({ links = NAV_LINKS }) {
       {/* Mobile menu */}
       {menuOpen && (
         <div style={s.mobileMenu}>
-          {links.map((l) => (
-            <Link key={l} to={l.path} style={s.mobileLink}>
-              {l}
+          {navLinks.map((l) => (
+            <Link key={l.name} to={l.path} style={s.mobileLink}>
+              {l.name}
             </Link>
           ))}
         </div>

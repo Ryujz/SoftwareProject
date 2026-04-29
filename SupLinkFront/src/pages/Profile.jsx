@@ -17,7 +17,7 @@ const INITIAL_USER = {
   stats: { orders: 142, spend: "฿4.2M", suppliers: 38, rating: 4.9 },
 };
 
-const NAV_LINKS = ["Marketplace", "My Orders", "Messages", "Analytics"];
+// const NAV_LINKS = ["Marketplace", "My Orders", "Messages", "Analytics"];
 
 /* ─── Helpers ─────────────────────────────────────────────────── */
 function initials(name) {
@@ -125,6 +125,14 @@ function SaveToast({ show }) {
   );
 }
 
+function logout() {
+  // localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  // optionally clear user state
+  window.location.href = "/";
+  setUser(null);
+}
+
 /* ─── Page ────────────────────────────────────────────────────── */
 export default function ProfilePage() {
   const [user, setUser]               = useState(INITIAL_USER);
@@ -158,9 +166,10 @@ export default function ProfilePage() {
   const display = editing ? draft : user;
 
   return (
+    <>
+    <Navbar />
     <div style={s.root}>
       <style>{CSS}</style>
-      <Navbar links={NAV_LINKS} />
       <SaveToast show={toastVisible} />
 
       {/* ── Cover banner ── */}
@@ -301,6 +310,15 @@ export default function ProfilePage() {
                 </div>
                 <button style={s.btnDanger}>Deactivate</button>
               </div>
+              <div style={s.dangerRow}>
+                <div>
+                  <div style={s.dangerLabel}>Logout</div>
+                  <div style={s.dangerDesc}>Sign out of your account on this device.</div>
+                </div>
+                <button style={s.btnDanger} onClick={logout}>
+                  Logout
+                </button>
+              </div>
             </SettingsSection>
 
             <div style={{ display: "flex", gap: 12 }}>
@@ -312,6 +330,7 @@ export default function ProfilePage() {
 
       </main>
     </div>
+    </>
   );
 }
 

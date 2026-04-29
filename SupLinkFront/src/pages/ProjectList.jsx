@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import Navbar from "../Components/NavBar";
-import POCard from "../Components/Cards";
-import { getAllPortfolios } from "../api/supplier";
+import ProjectCard from "../Components/ProjectCards";
+import { getAllProjects } from "../api/project";
+import { useAuth } from "../context/AuthContext";
 
 /* ─── Hooks ───────────────────────────────────────────────────── */
 function useInView(threshold = 0.15) {
@@ -36,20 +37,21 @@ const C = {
   blue: "#3b7dd8",
 };
 
-export default function Marketplace() {
-  const [portfolios, setPortfolios] = useState([]);
+export default function ProjectList() {
+  const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [heroRef, heroInView] = useInView(0.1);
   const [gridRef, gridInView] = useInView(0.1);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getAllPortfolios();
-        setPortfolios(data.portfolios ?? []);
+        const data = await getAllProjects();
+        setProjects(data);
       } catch (error) {
-        console.error("Error fetching portfolios:", error);
+        console.error("Error fetching projects:", error);
       } finally {
         setLoading(false);
       }
@@ -57,9 +59,9 @@ export default function Marketplace() {
     fetchData();
   }, []);
 
-  const filteredPortfolios = portfolios.filter(p =>
+  const filteredProjects = projects.filter(p =>
     p.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.company_name?.toLowerCase().includes(searchQuery.toLowerCase())
+    p.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -77,20 +79,20 @@ export default function Marketplace() {
         <div style={s.heroInner} ref={heroRef}>
           <div style={{ ...s.heroContent, ...fadeUp(heroInView) }}>
             <div style={s.heroBadge}>
-              <span style={s.badgeDot} /> Discover Talent
+              <span style={s.badgeDot} /> Marketplace
             </div>
             <h1 style={s.heroH1}>
-              Explore Verified<br />
-              <span style={s.heroAccent}>Supplier Portfolios</span>
+              Find the Right Project,<br />
+              <span style={s.heroAccent}>Faster Than Ever</span>
             </h1>
             <p style={s.heroSub}>
-              Browse curated portfolios from 180,000+ verified suppliers.
-              Find the perfect partner for your next project.
+              Connect with verified buyers, submit competitive quotes,
+              and discover opportunities that match your expertise.
             </p>
             <div style={s.searchBox}>
               <input
                 type="text"
-                placeholder="Search portfolios, companies, or specialties..."
+                placeholder="Search for products, projects, or categories..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={s.searchInput}
@@ -104,29 +106,29 @@ export default function Marketplace() {
       {/* ── Stats Bar ── */}
       <section style={s.stats}>
         <div style={s.statItem}>
-          <div style={s.statValue}>{portfolios.length}+</div>
-          <div style={s.statLabel}>Active Portfolios</div>
+          <div style={s.statValue}>{projects.length}+</div>
+          <div style={s.statLabel}>Active Projects</div>
         </div>
         <div style={s.statItem}>
-          <div style={s.statValue}>180K+</div>
-          <div style={s.statLabel}>Verified Suppliers</div>
+          <div style={s.statValue}>$2.4B+</div>
+          <div style={s.statLabel}>Project Value</div>
         </div>
         <div style={s.statItem}>
-          <div style={s.statValue}>2.4M+</div>
-          <div style={s.statLabel}>Successful Matches</div>
+          <div style={s.statValue}>97%</div>
+          <div style={s.statLabel}>Success Rate</div>
         </div>
       </section>
 
-      {/* ── Portfolio Grid ── */}
+      {/* ── Projects Grid ── */}
       <section style={s.gridSection} ref={gridRef}>
         <div style={s.sectionHeader}>
           <h2 style={s.sectionH2}>
-            {searchQuery ? `Search Results (${filteredPortfolios.length})` : "Featured Portfolios"}
+            {searchQuery ? `Search Results (${filteredProjects.length})` : "Available Projects"}
           </h2>
           <p style={s.sectionSub}>
             {searchQuery
-              ? `Found ${filteredPortfolios.length} matching portfolios`
-              : "Handpicked portfolios from top-tier suppliers across industries"}
+              ? `Found ${filteredProjects.length} projects matching your search`
+              : "Browse open RFPs, RFQs, and sourcing requests from verified buyers"}
           </p>
         </div>
 
@@ -135,20 +137,23 @@ export default function Marketplace() {
             Array(6).fill(0).map((_, i) => (
               <div key={i} style={{ ...s.skeletonCard, ...fadeUp(gridInView, i * 0.1) }} />
             ))
-          ) : filteredPortfolios.length === 0 ? (
+          ) : filteredProjects.length === 0 ? (
             <div style={s.emptyState}>
               <div style={s.emptyIcon}>📭</div>
-              <h3 style={s.emptyTitle}>No portfolios found</h3>
+              <h3 style={s.emptyTitle}>No projects found</h3>
               <p style={s.emptyDesc}>
                 {searchQuery
                   ? `Try adjusting your search for "${searchQuery}"`
-                  : "Be the first to showcase your portfolio"}
+                  : "Check back soon for new opportunities"}
               </p>
             </div>
           ) : (
-            filteredPortfolios.map((port, i) => (
-              <div key={port.portfolio_id} style={{ ...s.cardWrap, ...fadeUp(gridInView, i * 0.08) }}>
-                <POCard portfolio={port} />
+            filteredProjects.map((project, i) => (
+              <div key={project.id} style={{ ...s.cardWrap, ...fadeUp(gridInView, i * 0.08) }}>
+                <ProjectCard
+                  project={project}
+                  canInterest={user?.role === "supplier"}
+                />
               </div>
             ))
           )}
@@ -158,11 +163,11 @@ export default function Marketplace() {
       {/* ── CTA Banner ── */}
       <section style={s.ctaBanner}>
         <div style={s.ctaBannerGlow} />
-        <h2 style={s.ctaH2}>Ready to showcase your work?</h2>
-        <p style={s.ctaSub}>Join thousands of suppliers already growing their business with SupplyLink+</p>
+        <h2 style={s.ctaH2}>Have a project to share?</h2>
+        <p style={s.ctaSub}>Post your requirements and connect with qualified suppliers instantly</p>
         <div style={s.heroCta}>
-          <a href="#" style={s.btnPrimary}>Create Portfolio</a>
-          <a href="#" style={s.btnOutline}>Learn More</a>
+          <a href="#" style={s.btnPrimary}>Post a Project</a>
+          <a href="#" style={s.btnOutline}>View Pricing</a>
         </div>
       </section>
     </>
@@ -198,7 +203,7 @@ const s = {
   sectionSub: { fontSize: 16, color: C.muted, maxWidth: 500, lineHeight: 1.6, margin: "0 auto" },
   grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: 24 },
   cardWrap: { minWidth: 0 },
-  skeletonCard: { height: 420, background: `linear-gradient(90deg, ${C.surface} 25%, ${C.border} 50%, ${C.surface} 75%)`, borderRadius: 16, backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite" },
+  skeletonCard: { height: 480, background: `linear-gradient(90deg, ${C.surface} 25%, ${C.border} 50%, ${C.surface} 75%)`, borderRadius: 16, backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite" },
 
   emptyState: { gridColumn: "1 / -1", textAlign: "center", padding: "80px 24px" },
   emptyIcon: { fontSize: 48, marginBottom: 16 },

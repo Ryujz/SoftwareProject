@@ -8,6 +8,12 @@ const authHeaders = () => ({
 export const getMyProfile = async () => {
   const res = await fetch(`${BASE}/profile/me/view`, { headers: authHeaders() });
   const data = await res.json();
+  if (res.status === 401) {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "/login";
+    return;
+  }
   if (!res.ok) throw new Error(data.message);
   return data.supplier;
 };
@@ -41,4 +47,31 @@ export const getSupplierReviewSummary = async (supplierId) => {
   const data = await res.json();
   if (!res.ok) throw new Error(data.message);
   return data.summary;
+};
+export const getAllPortfolios = async () => {
+  const res = await fetch(`${BASE}/portfolio/all`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
+}
+
+export const AddPortfolio = async (portfolioData) => {
+  const res = await fetch(`${BASE}/portfolio/me`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(portfolioData),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
+};
+
+export const deletePortfolio = async (portfolioId) => {
+  const res = await fetch(`${BASE}/portfolio/${portfolioId}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
 };

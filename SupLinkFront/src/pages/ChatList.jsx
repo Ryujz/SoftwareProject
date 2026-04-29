@@ -1,41 +1,52 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/chatList.css";
+import { getMyPrivateChats } from "../api/chat";
+import { useAuth } from "../context/AuthContext";
 import Navbar from "../Components/NavBar";
-
-const chats = [
-  { id: 1, name: "Apex Industrial", last: "Invoice received", time: "2m" },
-  { id: 2, name: "Global Supplies", last: "Sent quotation", time: "10m" },
-  { id: 3, name: "Nexlane Logistics", last: "Approved PO", time: "1h" },
-];
+import "../styles/chatList.css";
 
 export default function ChatListPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [chats, setChats] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getMyPrivateChats()
+      .then(setChats)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <div className="chatListPage">
-      <h2 className="chatListTitle" style = {{padding: "20px"}}>Messages</h2>
       <Navbar />
+      <h2 className="chatListTitle" style={{ padding: "20px" }}>Messages</h2>
 
       <div className="chatList">
-        {chats.map((chat) => (
-          <div
-            key={chat.id}
-            className="chatItem"
-            onClick={() => navigate(`/chat/${chat.id}`)}
-          >
-            <div className="chatAvatar">
-              {chat.name.slice(0, 2).toUpperCase()}
-            </div>
-
-            <div className="chatInfo">
-              <div className="chatTop">
-                <span className="chatName">{chat.name}</span>
-                <span className="chatTime">{chat.time}</span>
+        {loading ? (
+          <p style={{ padding: "20px" }}>Loading chats...</p>
+        ) : chats.length === 0 ? (
+          <p style={{ padding: "20px", color: "#7a8499" }}>No chats yet.</p>
+        ) : (
+          chats.map((chat) => (
+            <div
+              key={chat.id}
+              className="chatItem"
+              onClick={() => navigate(`/chat/${chat.id}`, { state: { chatName: chat.other_username } })}
+            >
+              <div className="chatAvatar">
+                {chat.other_username?.slice(0, 2).toUpperCase()}
               </div>
-              <div className="chatLast">{chat.last}</div>
+              <div className="chatInfo">
+                <div className="chatTop">
+                  <span className="chatName">{chat.other_username}</span>
+                </div>
+                <div className="chatLast">{chat.other_email}</div>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

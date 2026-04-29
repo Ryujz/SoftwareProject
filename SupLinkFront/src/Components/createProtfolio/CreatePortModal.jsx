@@ -1,11 +1,10 @@
 import { useState } from "react";
-import "./createProjectModal.css"
-import { createProject } from "../../api/project";
-export default function CreateProjectModal({ open, onClose, onSuccess }) {
+import "./createPortModal.css"
+import { AddPortfolio } from "../../api/supplier";
+export default function CreatePortModal({ open, onClose, onSuccess }) {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
-  const [budget, setBudget] = useState("");
-
+  const [imageURL, setImageUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -15,27 +14,27 @@ export default function CreateProjectModal({ open, onClose, onSuccess }) {
     setLoading(true);
     setError("");
     
-    const projectdata = {
+    const portfolioData = {
       title: name,
       description: desc,
-      budget: Number(budget),
+      imageURL: imageURL,
       createdAt: new Date().toISOString()
     }
 
   try {
-    await createProject(projectdata);
+    await AddPortfolio(portfolioData);
 
     //success -> clear fields
     if (onSuccess) {
       onSuccess();
       setName("");
       setDesc("");
-      setBudget("");
+      setImageUrl("");
       onClose();
     }
   } catch (err) {
-    console.error("Error creating project:", err);
-    setError(err.message || "Failed to create project");
+    console.error("Error creating portfolio:", err);
+    setError(err.message || "Failed to create portfolio");
   } finally {
     setLoading(false);
   }
@@ -47,10 +46,10 @@ export default function CreateProjectModal({ open, onClose, onSuccess }) {
         className="modalBox"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2>Create Project</h2>
+        <h2>Create Portfolio</h2>
 
         <input
-          placeholder="Project Name"
+          placeholder="Portfolio Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
@@ -61,9 +60,9 @@ export default function CreateProjectModal({ open, onClose, onSuccess }) {
           onChange={(e) => setDesc(e.target.value)}
         />
         <input 
-        placeholder = "Budget"
-        value={budget}
-        onChange={(e) => setBudget(e.target.value)}
+        placeholder = "Image URL"
+        value={imageURL}
+        onChange={(e) => setImageUrl(e.target.value)}
         />
 
         <div className="modalActions">

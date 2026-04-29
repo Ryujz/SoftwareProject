@@ -461,6 +461,46 @@ router.put("/:id/complete", authMiddleware, roleMiddleware("vendor"), (req, res)
   });
 });
 
+// Delete project (owner vendor only)
+router.delete("/:id", authMiddleware, roleMiddleware("vendor"), (req, res) => {
+  const projectId = req.params.id;
+  const vendorId = req.user.id;
+
+  const checkSql = "SELECT * FROM projects WHERE id = ? AND vendor_id = ?";
+
+  db.query(checkSql, [projectId, vendorId], (checkErr, checkResults) => {
+    if (checkErr) {
+      console.error("Check project ownership error:", checkErr.message);
+      return res.status(500).json({ message: "Database error", error: checkErr.message });
+    }
+
+    if (checkResults.length === 0) {
+      return res.status(403).json({ message: "You can only delete your own project" });
+    }
+
+    const project = checkResults[0];
+
+    const deleteSql = "DELETE FROM projects WHERE id = ? AND vendor_id = ?";
+
+    db.query(deleteSql, [projectId, vendorId], (deleteErr) => {
+      if (deleteErr) {
+        console.error("Delete project error:", deleteErr.message);
+        return res.status(500).json({ message: "Failed to delete project", error: deleteErr.message });
+      }
+
+      createAuditLog({
+        user_id: vendorId,
+        action: "delete_project",
+        entity_type: "project",
+        entity_id: Number(projectId),
+        details: `Vendor deleted project "${project.title}"`
+      });
+
+      res.json({ message: "Project deleted successfully" });
+    });
+  });
+});
+
 // Update project (owner vendor only)
 router.put("/:id", authMiddleware, roleMiddleware("vendor"), (req, res) => {
   const title = req.body.title?.trim();

@@ -1,24 +1,3 @@
-// import NavBar from "./Components/NavBar"
-// import Hero from "./Components/Hero"
-// import Stats from "./Components/Stats"
-// import ProcureHome from "./ProcureHome"
-// export default function App() {
-//   return (
-//     <>
-//       <ProcureHome />
-//     </>
-//     // <>
-//     // <NavBar />
-//     // <div className="flex items-center justify-center">
-//     //   <Hero />
-//     // </div>
-//     // <div>
-//     //   <Stats />
-//     // </div>  
-//     // </>
-//   )
-// }
-
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./Components/ProtectedRoute";
@@ -32,25 +11,35 @@ import Chat from "./pages/Chat";
 import ChatList from "./pages/ChatList";
 import ProfilePage from "./pages/Profile";
 import SupplierProfilePage from "./pages/ProfileSupplier";
+import VendorProfilePage from "./pages/Profile";
+import ProjectList from "./pages/ProjectList";
+import PostedPortfolio from "./pages/PostedPortfolio";
+import { SocketProvider } from "./context/socketContext";
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<ProcureHome/>} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/marketplace" element={<Marketplace />} />
-          <Route path="/posted-projects" element={<PostedProject />} />
-          <Route path="/Chat" element={<ChatList />} />
-          <Route path="/chat/:id" element={<Chat />} />
-          <Route path="/Profile" element={<SupplierProfilePage />} /> 
-          <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+      <SocketProvider>
+        <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<ProcureHome/>} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+              <Route path="/marketplace" element={<Marketplace />} />
+              <Route path="/Chat" element={<ChatList />} />
+              <Route path="/chat/:id" element={<Chat />} />
+              <Route path="/browse-projects" element={<ProjectList />} />
+              <Route element={<ProtectedRoute />}>
+                <Route path="/posted-projects" element={<PostedProject />} />
+                <Route path="/posted-portfolio" element={<PostedPortfolio />} />
+                <Route path="/SupplierProfile" element={<SupplierProfilePage />} /> 
+                <Route path="/VendorProfile" element={<VendorProfilePage />} />
+                <Route path="/dashboard" element={<DashboardPage />} />
+              </Route>
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </SocketProvider>
+      </AuthProvider>
+    
   );
 }

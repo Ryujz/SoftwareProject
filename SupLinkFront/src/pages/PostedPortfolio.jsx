@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../Components/NavBar";
-import { getMyProjects } from "../api/project";
-import CreateProjectButton from "../Components/createProject/CreateProject";
-import CreateProjectModal from "../Components/createProject/CreateProjectModal";
-import ProjectCard from "../Components/ProjectCards";
+import { getMyPortfolios, getMyProfile } from "../api/supplier";
+import CreatePortfolioButton from "../Components/createProtfolio/CreatePortolio";
+import CreatePortModal from "../Components/createProtfolio/CreatePortModal";
+import POCard from "../Components/Cards";
 
 /* ─── Hooks ───────────────────────────────────────────────────── */
 function useInView(threshold = 0.15) {
@@ -40,32 +40,31 @@ const C = {
   green: "#7ed321",
 };
 
-export default function PostedProject() {
+export default function PostedPortfolio() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  const [projects, setProjects] = useState([]);
+  const [portfolios, setPortfolios] = useState([]);
+  const [profile, setProfile] = useState({});
   const [loading, setLoading] = useState(true);
   const [headerRef, headerInView] = useInView(0.1);
   const [gridRef, gridInView] = useInView(0.1);
 
-  const fetchProject = async () => {
+  const fetchPortfolios = async () => {
     try {
-      const data = await getMyProjects();
-      setProjects(data ?? []);
+      const data = await getMyPortfolios();
+      const profileData = await getMyProfile();
+      setPortfolios(data ?? []);
+      setProfile(profileData ?? {});
     } catch (err) {
-      console.error("Error fetching projects:", err);
+      console.error("Error fetching portfolios:", err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchProject();
+    fetchPortfolios();
   }, []);
-
-  const openCount = projects.filter(p => p.status === "open").length;
-  const inProgressCount = projects.filter(p => p.status === "in_progress").length;
-  const completedCount = projects.filter(p => p.status === "completed").length;
 
   return (
     <>
@@ -81,31 +80,27 @@ export default function PostedProject() {
         <div style={s.headerInner}>
           <div style={{ ...s.headerContent, ...fadeUp(headerInView) }}>
             <div style={s.heroBadge}>
-              <span style={s.badgeDot} /> Project Manager
+              <span style={s.badgeDot} /> Portfolio Manager
             </div>
             <h1 style={s.headerH1}>
-              Your <span style={s.headerAccent}>Projects</span>
+              Your <span style={s.headerAccent}>Portfolios</span>
             </h1>
             <p style={s.headerSub}>
-              Create, manage, and track your sourcing projects.
-              Monitor responses and connect with qualified suppliers.
+              Manage and showcase your work to thousands of potential buyers.
+              Keep your portfolios updated for maximum visibility.
             </p>
             <div style={s.headerStats}>
-              <div style={{ ...s.statBox, borderLeft: `3px solid ${C.blue}` }}>
-                <div style={{ ...s.statValue, color: C.blue }}>{openCount}</div>
-                <div style={s.statLabel}>Open</div>
-              </div>
-              <div style={{ ...s.statBox, borderLeft: `3px solid ${C.accent}` }}>
-                <div style={{ ...s.statValue, color: C.accent }}>{inProgressCount}</div>
-                <div style={s.statLabel}>In Progress</div>
-              </div>
-              <div style={{ ...s.statBox, borderLeft: `3px solid ${C.green}` }}>
-                <div style={{ ...s.statValue, color: C.green }}>{completedCount}</div>
-                <div style={s.statLabel}>Completed</div>
+              <div style={s.statBox}>
+                <div style={s.statValue}>{portfolios.length}</div>
+                <div style={s.statLabel}>Active Portfolios</div>
               </div>
               <div style={s.statBox}>
-                <div style={s.statValue}>{projects.length}</div>
-                <div style={s.statLabel}>Total</div>
+                <div style={s.statValue}>{profile?.total_views ?? 0}</div>
+                <div style={s.statLabel}>Total Views</div>
+              </div>
+              <div style={s.statBox}>
+                <div style={s.statValue}>{profile?.total_inquiries ?? 0}</div>
+                <div style={s.statLabel}>Inquiries</div>
               </div>
             </div>
           </div>
@@ -116,44 +111,44 @@ export default function PostedProject() {
       <section style={s.actionBar}>
         <div style={s.actionInner}>
           <div style={s.actionLeft}>
-            <h2 style={s.actionTitle}>All Projects</h2>
+            <h2 style={s.actionTitle}>All Portfolios</h2>
             <p style={s.actionSub}>
-              {loading ? "Loading your projects..." : `${projects.length} project${projects.length !== 1 ? "s" : ""} found`}
+              {loading ? "Loading your portfolios..." : `${portfolios.length} portfolio${portfolios.length !== 1 ? "s" : ""} found`}
             </p>
           </div>
           <div style={s.actionRight}>
-            <CreateProjectButton onClick={() => setOpen(!open)} style={s.createBtn} />
+            <CreatePortfolioButton onClick={() => setOpen(!open)} style={s.createBtn} />
           </div>
         </div>
       </section>
 
-      {/* ── Projects Grid ── */}
+      {/* ── Portfolio Grid ── */}
       <section style={s.gridSection} ref={gridRef}>
-        <CreateProjectModal open={open} onClose={() => setOpen(false)} onSuccess={fetchProject} />
+        <CreatePortModal open={open} onClose={() => setOpen(false)} onSuccess={fetchPortfolios} />
 
         <div style={s.grid}>
           {loading ? (
             Array(4).fill(0).map((_, i) => (
               <div key={i} style={{ ...s.skeletonCard, ...fadeUp(gridInView, i * 0.1) }} />
             ))
-          ) : projects.length === 0 ? (
+          ) : portfolios.length === 0 ? (
             <div style={s.emptyState}>
-              <div style={s.emptyIcon}>📋</div>
-              <h3 style={s.emptyTitle}>No projects yet</h3>
+              <div style={s.emptyIcon}>📁</div>
+              <h3 style={s.emptyTitle}>No portfolios yet</h3>
               <p style={s.emptyDesc}>
-                Create your first project to start receiving quotes from verified suppliers.
+                Create your first portfolio to start showcasing your work to potential buyers.
               </p>
               <button style={s.emptyBtn} onClick={() => setOpen(true)}>
-                <span style={s.emptyBtnIcon}>+</span> Create Project
+                <span style={s.emptyBtnIcon}>+</span> Create Portfolio
               </button>
             </div>
           ) : (
-            projects.map((project, i) => (
-              <div key={project.id} style={{ ...s.cardWrap, ...fadeUp(gridInView, i * 0.08) }}>
-                <ProjectCard
-                  project={project}
+            portfolios.map((portfolio, i) => (
+              <div key={portfolio.portfolio_id} style={{ ...s.cardWrap, ...fadeUp(gridInView, i * 0.08) }}>
+                <POCard
+                  portfolio={portfolio}
                   canDelete
-                  onDelete={(deletedID) => setProjects((prev) => prev.filter((p) => p.id !== deletedID))}
+                  onDelete={(deletedID) => setPortfolios((prev) => prev.filter((p) => p.portfolio_id !== deletedID))}
                 />
               </div>
             ))
@@ -163,7 +158,7 @@ export default function PostedProject() {
 
       {/* ── Tips Section ── */}
       <section style={s.tipsSection}>
-        <h2 style={s.tipsTitle}>Tips for Successful Projects</h2>
+        <h2 style={s.tipsTitle}>Tips for Great Portfolios</h2>
         <div style={s.tipsGrid}>
           {TIPS.map((tip, i) => (
             <div key={i} style={s.tipCard}>
@@ -179,10 +174,10 @@ export default function PostedProject() {
 }
 
 const TIPS = [
-  { icon: "📋", title: "Clear Requirements", desc: "Provide detailed specifications to attract qualified suppliers" },
-  { icon: "💰", title: "Realistic Budget", desc: "Set competitive budgets based on market research" },
-  { icon: "⏱️", title: "Reasonable Timeline", desc: "Allow sufficient time for quality submissions" },
-  { icon: "💬", title: "Stay Responsive", desc: "Respond promptly to supplier inquiries and questions" },
+  { icon: "📸", title: "High-Quality Images", desc: "Use clear, professional images that showcase your best work" },
+  { icon: "📝", title: "Detailed Descriptions", desc: "Explain your process, materials, and unique value proposition" },
+  { icon: "🏆", title: "Highlight Achievements", desc: "Showcase awards, certifications, and notable clients" },
+  { icon: "🔄", title: "Keep It Updated", desc: "Regularly add new projects to show active engagement" },
 ];
 
 /* ─── Styles ──────────────────────────────────────────────────── */
@@ -198,10 +193,10 @@ const s = {
   headerH1: { fontSize: "clamp(36px, 5vw, 56px)", fontWeight: 800, lineHeight: 1.08, letterSpacing: "-0.03em", margin: "0 0 20px" },
   headerAccent: { color: C.accent },
   headerSub: { fontSize: 17, color: C.muted, lineHeight: 1.7, maxWidth: 520, margin: "0 0 40px", marginLeft: "auto", marginRight: "auto" },
-  headerStats: { display: "flex", justifyContent: "center", gap: 32, flexWrap: "wrap" },
-  statBox: { textAlign: "center", background: C.surface, border: `1px solid ${C.border}`, padding: "20px 28px", borderRadius: 12, minWidth: 100 },
-  statValue: { fontSize: "clamp(28px, 3vw, 40px)", fontWeight: 800, letterSpacing: "-0.03em" },
-  statLabel: { fontSize: 11, color: C.muted, marginTop: 8, textTransform: "uppercase", letterSpacing: ".08em" },
+  headerStats: { display: "flex", justifyContent: "center", gap: 48, flexWrap: "wrap" },
+  statBox: { textAlign: "center" },
+  statValue: { fontSize: "clamp(32px, 4vw, 44px)", fontWeight: 800, color: C.accent, letterSpacing: "-0.03em" },
+  statLabel: { fontSize: 12, color: C.muted, marginTop: 6, textTransform: "uppercase", letterSpacing: ".08em" },
 
   actionBar: { background: C.surface, borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` },
   actionInner: { maxWidth: 1200, margin: "0 auto", padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 },
@@ -214,7 +209,7 @@ const s = {
   gridSection: { maxWidth: 1200, margin: "0 auto", padding: "60px 24px" },
   grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: 24 },
   cardWrap: { minWidth: 0 },
-  skeletonCard: { height: 480, background: `linear-gradient(90deg, ${C.surface} 25%, ${C.border} 50%, ${C.surface} 75%)`, borderRadius: 16, backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite" },
+  skeletonCard: { height: 420, background: `linear-gradient(90deg, ${C.surface} 25%, ${C.border} 50%, ${C.surface} 75%)`, borderRadius: 16, backgroundSize: "200% 100%", animation: "shimmer 1.5s infinite" },
 
   emptyState: { gridColumn: "1 / -1", textAlign: "center", padding: "80px 24px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16 },
   emptyIcon: { fontSize: 56, marginBottom: 20 },

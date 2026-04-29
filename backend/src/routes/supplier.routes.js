@@ -63,76 +63,43 @@ router.get("/", (req, res) => {
   });
 });
 
-// Get supplier by user id + portfolios
-router.get("/:id", (req, res) => {
-  const supplierSql = `
+// Get all portfolios from all suppliers
+router.get("/portfolio/all", (req, res) => {
+  const sql = `
     SELECT 
-      users.id AS user_id,
-      users.username,
-      users.email,
-      users.role,
+      supplier_portfolios.id AS portfolio_id,
+      supplier_portfolios.title,
+      supplier_portfolios.description,
+      supplier_portfolios.image_url,
+      supplier_portfolios.created_at,
       supplier_profiles.id AS supplier_profile_id,
       supplier_profiles.company_name,
       supplier_profiles.business_type,
-      supplier_profiles.description,
-      supplier_profiles.address,
-      supplier_profiles.phone
-    FROM users
-    LEFT JOIN supplier_profiles ON users.id = supplier_profiles.user_id
-    WHERE users.role = 'supplier' AND users.is_verified = TRUE AND users.id = ?
+      users.id AS user_id,
+      users.username
+    FROM supplier_portfolios
+    JOIN supplier_profiles ON supplier_portfolios.supplier_profile_id = supplier_profiles.id
+    JOIN users ON supplier_profiles.user_id = users.id
+    WHERE users.is_verified = TRUE
+    ORDER BY supplier_portfolios.created_at DESC
   `;
 
-  db.query(supplierSql, [req.params.id], (err, supplierResults) => {
+  db.query(sql, (err, results) => {
     if (err) {
-      console.error("Get supplier by id error:", err.message);
+      console.error("Get all portfolios error:", err.message);
       return res.status(500).json({
-        message: "Failed to fetch supplier",
+        message: "Failed to fetch portfolios",
         error: err.message
       });
     }
 
-    if (supplierResults.length === 0) {
-      return res.status(404).json({
-        message: "Supplier not found"
-      });
-    }
-
-    const supplier = supplierResults[0];
-
-    if (!supplier.supplier_profile_id) {
-      return res.json({
-        message: "Supplier fetched successfully",
-        supplier,
-        portfolios: []
-      });
-    }
-
-    const portfolioSql = `
-      SELECT id, title, description, image_url, created_at
-      FROM supplier_portfolios
-      WHERE supplier_profile_id = ?
-      ORDER BY created_at DESC
-    `;
-
-    db.query(portfolioSql, [supplier.supplier_profile_id], (portfolioErr, portfolioResults) => {
-      if (portfolioErr) {
-        console.error("Get portfolios error:", portfolioErr.message);
-        return res.status(500).json({
-          message: "Failed to fetch portfolios",
-          error: portfolioErr.message
-        });
-      }
-
-      res.json({
-        message: "Supplier fetched successfully",
-        supplier,
-        portfolios: portfolioResults
-      });
+    res.json({
+      message: "All portfolios fetched successfully",
+      portfolios: results
     });
   });
 });
 
-// Create or update my supplier profile
 // Create or update my supplier profile
 router.put("/profile/me", authMiddleware, roleMiddleware("supplier"), (req, res) => {
   const company_name = req.body.company_name?.trim();
@@ -253,7 +220,6 @@ router.get("/profile/me/view", authMiddleware, roleMiddleware("supplier"), (req,
 });
 
 // Add portfolio item (supplier only)
-// Add portfolio item (supplier only)
 router.post("/portfolio/me", authMiddleware, roleMiddleware("supplier"), (req, res) => {
   const title = req.body.title?.trim();
   const description = req.body.description?.trim() || null;
@@ -354,6 +320,35 @@ router.get("/portfolio/me/view", authMiddleware, roleMiddleware("supplier"), (re
   });
 });
 
+// Delete portfolio item (supplier only)
+router.delete("/portfolio/:portfolioId", authMiddleware, roleMiddleware("supplier"), (req, res) => {
+  const userId = req.user.id;
+  const portfolioId = req.params.portfolioId;
+  const portfolioSql = "DELETE from supplier_portfolios WHERE id = ?";
+
+  db.query(portfolioSql, [portfolioId], (portfolioErr, portfolioResults) => {
+    if (portfolioErr) {
+      console.error("Find portfolio error:", portfolioErr.message);
+      return res.status(500).json({ message: "Database error", error: portfolioErr.message });
+    }
+
+    if (portfolioResults.affectedRows === 0) {
+      return res.status(404).json({ message: "Portfolio not found" });
+    }
+
+        createAuditLog({
+          user_id: userId,
+          action: "delete_portfolio",
+          entity_type: "supplier_portfolio",
+          entity_id: Number(portfolioId),
+          details: `Supplier deleted portfolio ID ${portfolioId}`
+        });
+
+        res.json({ message: "Portfolio deleted successfully" });
+      
+    });
+  });
+
 // Edit portfolio item (supplier only)
 // Edit portfolio item (supplier only)
 router.put("/portfolio/:portfolioId", authMiddleware, roleMiddleware("supplier"), (req, res) => {
@@ -439,6 +434,75 @@ router.put("/portfolio/:portfolioId", authMiddleware, roleMiddleware("supplier")
           });
         }
       );
+    });
+  });
+});
+
+// Get supplier by user id + portfolios
+router.get("/:id", (req, res) => {
+  const supplierSql = `
+    SELECT 
+      users.id AS user_id,
+      users.username,
+      users.email,
+      users.role,
+      supplier_profiles.id AS supplier_profile_id,
+      supplier_profiles.company_name,
+      supplier_profiles.business_type,
+      supplier_profiles.description,
+      supplier_profiles.address,
+      supplier_profiles.phone
+    FROM users
+    LEFT JOIN supplier_profiles ON users.id = supplier_profiles.user_id
+    WHERE users.role = 'supplier' AND users.is_verified = TRUE AND users.id = ?
+  `;
+
+  db.query(supplierSql, [req.params.id], (err, supplierResults) => {
+    if (err) {
+      console.error("Get supplier by id error:", err.message);
+      return res.status(500).json({
+        message: "Failed to fetch supplier",
+        error: err.message
+      });
+    }
+
+    if (supplierResults.length === 0) {
+      return res.status(404).json({
+        message: "Supplier not found"
+      });
+    }
+
+    const supplier = supplierResults[0];
+
+    if (!supplier.supplier_profile_id) {
+      return res.json({
+        message: "Supplier fetched successfully",
+        supplier,
+        portfolios: []
+      });
+    }
+
+    const portfolioSql = `
+      SELECT id, title, description, image_url, created_at
+      FROM supplier_portfolios
+      WHERE supplier_profile_id = ?
+      ORDER BY created_at DESC
+    `;
+
+    db.query(portfolioSql, [supplier.supplier_profile_id], (portfolioErr, portfolioResults) => {
+      if (portfolioErr) {
+        console.error("Get portfolios error:", portfolioErr.message);
+        return res.status(500).json({
+          message: "Failed to fetch portfolios",
+          error: portfolioErr.message
+        });
+      }
+
+      res.json({
+        message: "Supplier fetched successfully",
+        supplier,
+        portfolios: portfolioResults
+      });
     });
   });
 });
